@@ -1,0 +1,155 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+public class WeatherApp {
+    private static final String API_KEY = "b6907d289e10d714a6e88b30761fae22";
+    private static final String BASE_URL = "https://samples.openweathermap.org/data/2.5/forecast/hourly?q=London,us&appid=" + API_KEY;
+
+    public static void main(String[] args) {
+        WeatherApp app = new WeatherApp();
+        app.run();
+    }
+
+    private void run() {
+        boolean running = true;
+
+        while (running) {
+            printMenu();
+            int option = getUserOption();
+            switch (option) {
+                case 1:
+                    getWeatherData();
+                    break;
+                case 2:
+                    getWindSpeedData();
+                    break;
+                case 3:
+                    getPressureData();
+                    break;
+                case 0:
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+            }
+        }
+
+        System.out.println("Exiting the program.");
+    }
+
+    private void printMenu() {
+        System.out.println("1. Get weather");
+        System.out.println("2. Get Wind Speed");
+        System.out.println("3. Get Pressure");
+        System.out.println("0. Exit");
+    }
+
+    private int getUserOption() {
+        System.out.print("Enter your choice: ");
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            return Integer.parseInt(br.readLine());
+        } catch (IOException | NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private void getWeatherData() {
+        String date = getUserInput("Enter the date (YYYY-MM-DD HH:mm:ss): ");
+        JSONObject weatherData = fetchDataFromAPI();
+
+        if (weatherData != null) {
+            JSONArray list = weatherData.getJSONArray("list");
+            for (int i = 0; i < list.length(); i++) {
+                JSONObject data = list.getJSONObject(i);
+                String dataDate = data.getString("dt_txt");
+                if (dataDate.startsWith(date)) {
+                    JSONObject main = data.getJSONObject("main");
+                    double temperature = main.getDouble("temp");
+                    System.out.println("Temperature on " + dataDate + ": " + temperature + "°C");
+                    return;
+                }
+            }
+            System.out.println("No weather data found for the given date.");
+        }
+    }
+
+    private void getWindSpeedData() {
+        String date = getUserInput("Enter the date (YYYY-MM-DD HH:mm:ss): ");
+        JSONObject weatherData = fetchDataFromAPI();
+
+        if (weatherData != null) {
+            JSONArray list = weatherData.getJSONArray("list");
+            for (int i = 0; i < list.length(); i++) {
+                JSONObject data = list.getJSONObject(i);
+                String dataDate = data.getString("dt_txt");
+                if (dataDate.startsWith(date)) {
+                    JSONObject wind = data.getJSONObject("wind");
+                    double windSpeed = wind.getDouble("speed");
+                    System.out.println("Wind speed on " + dataDate + ": " + windSpeed + " m/s");
+                    return;
+                }
+            }
+            System.out.println("No wind speed data found for the given date.");
+        }
+    }
+
+    private void getPressureData() {
+        String date = getUserInput("Enter the date (YYYY-MM-DD HH:mm:ss): ");
+        JSONObject weatherData = fetchDataFromAPI();
+
+        if (weatherData != null) {
+            JSONArray list = weatherData.getJSONArray("list");
+            for (int i = 0; i < list.length(); i++) {
+                JSONObject data = list.getJSONObject(i);
+                String dataDate = data.getString("dt_txt");
+                if (dataDate.startsWith(date)) {
+                    JSONObject main = data.getJSONObject("main");
+                    double pressure = main.getDouble("pressure");
+                    System.out.println("Pressure on " + dataDate + ": " + pressure + " hPa");
+                    return;
+                }
+            }
+            System.out.println("No pressure data found for the given date.");
+        }
+    }
+
+    private String getUserInput(String message) {
+        System.out.print(message);
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            return br.readLine();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private JSONObject fetchDataFromAPI() {
+        try {
+            URL url = new URL(BASE_URL);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+            in.close();
+
+            return new JSONObject(response.toString());
+        } catch (IOException e) {
+            System.out.println("Error connecting to the API: " + e.getMessage());
+            return null;
+        }
+    }
+}
+
+
